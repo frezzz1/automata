@@ -22,7 +22,7 @@ def format_result(result):
 def writeToFile(outFile, result):
     formatted_result = format_result(result)
     with open(outFile, mode='w', newline='') as file:
-        writer = csv.writer(file, delimiter='')
+        writer = csv.writer(file, delimiter=';')
         writer.writerows(formatted_result)
 
 def getOriginalMealy(infile):
