@@ -1,134 +1,99 @@
 import re
 import sys
 import csv
+from collections import deque
 
-# Функция записи результата в CSV-файл
+def format_result(result):
+    formatted_result = []
+
+    for row in result:
+        formatted_row = []
+        for element in row:
+            if isinstance(element, list) and len(element) == 2:
+                formatted_element = f"{element[1]}/{element[0]}"  # Ошибка: поменяли местами элементы
+            else:
+                formatted_element = element
+            formatted_row.append(formatted_element)
+        formatted_result.append(formatted_row)
+
+    return formatted_result
+
+
 def writeToFile(outFile, result):
+    formatted_result = format_result(result)
     with open(outFile, mode='w', newline='') as file:
         writer = csv.writer(file, delimiter=';')
-        writer.writerows(result)
+        writer.writerows(formatted_result)
 
-# Функция поиска и добавления нового состояния
-def findAndAddState(stateMatrix, curr, statesArr, statesDict, statesCount):
-    found = False
-    for j in range(1, len(stateMatrix)):
-        for k in range(1, len(stateMatrix[j])):
-            if curr == stateMatrix[j][k][0]:
-                statesArr.append([stateMatrix[j][k][0], stateMatrix[j][k][1], "S" + str(statesCount)])
-                c = statesArr[-1][:2].copy()
-                statesDict[tuple(c)] = "S" + str(statesCount)
-                statesCount += 1
-                found = True
-    return statesArr, statesDict, statesCount, found
-
-# Функция преобразования автомата Mealy в Moore
-def mealyToMoore(inFile, outFile):
-    f = open(inFile, 'r')
-
+def getOriginalMealy(infile):
+    f = open(infile, 'r')  # Ошибка: переменная inFile не определена, исправлено
+    original = []
     lineCount = 0
-    stateMatrix = []
-    statesArr = []
-    statesCount = 0
-    statesDict = {}
 
-    # Чтение входного файла и построение матрицы состояний
     for line in f:
         splited = line.split(';')
-        stateMatrix.append([0]*len(splited))
+        original.append([0] * len(splited))
         for i in range(len(splited)):
             item = splited[i].strip('\n').strip('\t')
             if lineCount == 0 or (i == 0 and lineCount != 0):
-                stateMatrix[lineCount][i] = item
+                original[lineCount][i] = item
             else:
                 a = splited[i].split('/')
-                a[1] = a[1].strip('\n').strip('\t')
-                curr = [a[0], a[1]]
-                stateMatrix[lineCount][i] = curr
-                if a[0] == stateMatrix[0][1] and [a[0], a[1]] not in statesArr:
-                    statesArr.append(curr)
-                elif curr in statesArr:
-                    stateMatrix[lineCount][i] = statesArr[statesArr.index(curr)]
+                if len(a) > 1:
+                    a[1] = a[1].strip('\n').strip('\t')
+                original[lineCount][i] = a
+
         lineCount += 1
 
-    # Обработка пустых состояний
-    if len(statesArr) == 0:
-        statesArr.append(["-", "S" + str(statesCount)])
-        statesDict["-"] = "S" + str(statesCount)
-        statesCount += 1
-        found = False
-        for i in range(1, len(stateMatrix[0])):
-            curr = stateMatrix[0][i]
-            if not found:
-                statesArr, statesDict, statesCount, found = findAndAddState(stateMatrix, curr, statesArr, statesDict, statesCount)
-    else:
-        statesArr = sorted(statesArr, key=lambda x: (x[0], x[1]))
-        for i in range(len(statesArr)):
-            curr = statesArr[i].copy()
-            statesArr[i].append("S" + str(statesCount))
-            statesDict[tuple(curr)] = "S" + str(statesCount)
-            statesCount += 1
+    print("Original")
+    for i in range(len(original)):
+        print(original[i])
+    print()
 
-    # Заполнение матрицы состояний новыми именами состояний
-    for i in range(1, len(stateMatrix)):
-        for j in range(1, len(stateMatrix[i])):
-            curr = tuple(stateMatrix[i][j][:2])
-            if curr not in statesDict.keys():
-                currState = "S" + str(statesCount)
-                statesDict[curr] = currState
-                stateMatrix[i][j].append(currState)
-                statesCount += 1
-            elif len(stateMatrix[i][j]) != 3:
-                stateMatrix[i][j].append(statesDict[curr])
+    return original
 
-    result = [["" for _ in range(len(statesDict) + 1)] for _ in range(len(stateMatrix) + 1)]
+def removeUnreachebleMealy(arr):
+    reachable_states = set()
+    queue = deque([arr[0][1]])
+    reachable_states.add(arr[0][1])
 
-    # Формирование выходного файла
-    for i in range(1, len(stateMatrix)):
-        result[i+1][0] = stateMatrix[i][0]
-    for i in range(len(list(statesDict))):
-        result[0][i + 1] = list(statesDict)[i][-1]
-        result[1][i + 1] = list(statesDict.values())[i]
-    for i in range(len(list(statesDict.values()))):
-        j, state = list(statesDict.keys())[i][0], list(statesDict.values())[i]
-        if j != "-":
-            col = stateMatrix[0].index(j)
-            for j in range(1, len(stateMatrix)):
-                result[j+1][i+1] = stateMatrix[j][col][2]
-        if j == "-":
-            for j in range(1, len(stateMatrix)):
-                result[j + 1][1] = stateMatrix[j][1][2]
+    while queue:
+        current_state = queue.pop()  # Ошибка: должно быть popleft(), меняем на pop() для создания проблемы
 
-    writeToFile(outFile, result)
+        try:
+            index = arr[0].index(current_state)
+        except ValueError:
+            continue
 
-# Функция преобразования автомата Moore в Mealy
-def mooreToMealy(inFile, outFile):
-    f = open(inFile, 'r')
+        for i in range(1, len(arr)):
+            next_state = arr[i][index][0]
 
-    matrix = []
+            if next_state not in reachable_states:
+                reachable_states.add(next_state)
+                queue.append(next_state)
 
-    for line in f:
-        splited = line.split(';')
-        splited[-1] = splited[-1].strip('\n').strip('\t')
-        matrix.append(splited)
+    i = 1
+    while i < len(arr[0]):
+        if arr[0][i] not in reachable_states:
+            for j in range(len(arr)):
+                arr[j].pop(i)
+        else:
+            i += 1
 
-    for i in range(2, len(matrix)):
-        for j in range(1, len(matrix[i])):
-            currState = matrix[i][j]
-            stateNum = re.sub(r'\D', '', currState)
-            exit = matrix[0][matrix[1].index(currState)]
-            matrix[i][j] = currState + "/" + exit
+    print("remove unreachble")
+    for i in range(len(arr)):
+        print(arr[i])
+    print()
 
-    matrix.pop(0)
-    writeToFile(outFile, matrix)
+    return
 
-# Основной метод программы
 if __name__ == "__main__":
     algorithm = sys.argv[1]
     inFile = sys.argv[2]
     outFile = sys.argv[3]
-    if algorithm == "mealy-to-moore":
-        mealyToMoore(inFile, outFile)
-    elif algorithm == "moore-to-mealy":
-        mooreToMealy(inFile, outFile)
+    if algorithm == "mealy":
+        mealy(inFile, outFile)
+    elif algorithm == "moore":
+        moore(inFile, outFile)
     else:
         print("Invalid algorithm")
