@@ -38,7 +38,7 @@ def getOriginalMealy(infile):
             if lineCount == 0 or (i == 0 and lineCount != 0):
                 original[lineCount][i] = item
             else:
-                a = splited[i].split('\')
+                a = splited[i].split('/')
                 a[1] = a[1].strip('\n').strip('\t')
                 original[lineCount][i] = a
 
