@@ -135,7 +135,7 @@ def ToStates(rules, type):
                         nextState = result[1][result[1].index(nextState)]
                         result[terminalIdx+2][result[1].index(statesMap[f'<{re.search(findNonTerminal, currState).group(1)}>'])] += f',{nextState}'
                 else:
-                    if '<' in val and '>' in val:
+                    if '<' in val or '>' in val:
                         nextState = result[1].index(statesMap[f'<{re.search(findNonTerminal, val).group(1)}>'])
                         terminalIdx = terminals.index(re.search(findTerminal, val).group(1))
                         if result[terminalIdx + 2][nextState] == "":
