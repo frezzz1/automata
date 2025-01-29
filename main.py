@@ -10,7 +10,7 @@ def format_result(result):
         formatted_row = []
         for element in row:
             if isinstance(element, list) and len(element) == 2:
-                formatted_element = f"{element[1]}/{element[0]}"  # Ошибка: поменяли местами элементы
+                formatted_element = f"{element[1]}/{element[0]}"  
             else:
                 formatted_element = element
             formatted_row.append(formatted_element)
