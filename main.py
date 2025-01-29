@@ -26,7 +26,7 @@ def writeToFile(outFile, result):
         writer.writerows(formatted_result)
 
 def getOriginalMealy(infile):
-    f = open(infile, 'r')  # Ошибка: переменная inFile не определена, исправлено
+    f = open(infile, 'r')  
     original = []
     lineCount = 0
 
@@ -58,8 +58,7 @@ def removeUnreachebleMealy(arr):
     reachable_states.add(arr[0][1])
 
     while queue:
-        current_state = queue.pop()  # Ошибка: должно быть popleft(), меняем на pop() для создания проблемы
-
+        current_state = queue.popleft()  
         try:
             index = arr[0].index(current_state)
         except ValueError:
