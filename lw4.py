@@ -123,7 +123,7 @@ def MakeDFA(original, states, terminals, transitions):
 
     for i, v in enumerate(dfaStates.items()):
         #print(i, v)
-        result[1][i + 3] = v[1]
+        result[1][i + 1] = v[1]
         for state in v[0]:
             if original[0][original[1].index(state)] == 'F':
                 result[0][i + 1] = 'F'
