@@ -1,2 +1,2 @@
 dispatcher: python3.13
-script: Lab5/main.py
+script: lw5/main.py
